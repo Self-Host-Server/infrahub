@@ -2,7 +2,7 @@
   "name": "self-hosting-template",
   "private": true,
   "dependencies": {
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.10"
   },
   "devDependencies": {
     "jscpd": "^5.4.2",
