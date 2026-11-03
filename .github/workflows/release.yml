@@ -84,8 +84,7 @@ jobs:
           STEPS_VERSION_OUTPUTS_PREV: ${{ steps.version.outputs.prev }}
           STEPS_VERSION_OUTPUTS_TAG: ${{ steps.version.outputs.tag }}
         run: |
-          CLIFF_VER=$(curl -sf "https://api.github.com/repos/orhun/git-cliff/releases/latest" \
-            | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'].lstrip('v'))")
+          CLIFF_VER=2.14.2
           curl -fsSL \
             "https://github.com/orhun/git-cliff/releases/download/v${CLIFF_VER}/git-cliff-${CLIFF_VER}-x86_64-unknown-linux-musl.tar.gz" \
             | tar -xz -C /tmp
