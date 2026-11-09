@@ -1,5 +1,5 @@
 {
-  "name": "self-hosting-template",
+  "name": "infrahub",
   "private": true,
   "dependencies": {
     "prettier": "^3.9.10"
