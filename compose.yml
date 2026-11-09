@@ -275,7 +275,8 @@ services:
       interval: 2s
       timeout: 10s
       retries: 20
-      start_period: 3s
+      # First boot took ~4 min on a 3-core Proxmox LXC; failures here don't count
+      start_period: 300s
     ports:
       - 2004:2004
       - 6362:6362
