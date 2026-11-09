@@ -1,6 +1,17 @@
-# Self-Hosting-Template
+# Infrahub
 
-A GitHub template repo for bootstrapping new self-hosting projects with linting, CI, and release automation already wired up.
+A self-hosted [Infrahub](https://docs.infrahub.app) deployment via Docker Compose. `compose.yml` is the upstream OpsMill compose file; secrets and overrides go in `.env`.
+
+## Run it
+
+1. Copy the env file: `cp .env.example .env`
+2. Replace every `replace_me` in `.env` (generator commands are in the comments)
+3. Start it: `docker compose up -d`
+4. Open `http://localhost:8000` and log in as `admin` with `INFRAHUB_INITIAL_ADMIN_PASSWORD`
+
+Upgrade by bumping `VERSION` in `.env`, then `docker compose pull && docker compose up -d`. Any variable from the [configuration reference](https://docs.infrahub.app/reference/configuration) can be set in `.env`.
+
+This repo is built on a GitHub template for bootstrapping self-hosting projects with linting, CI, and release automation already wired up (documented below).
 
 ## What's included
 
@@ -24,17 +35,10 @@ A GitHub template repo for bootstrapping new self-hosting projects with linting,
 - **`CODEOWNERS`** — defaults review ownership to `@Self-Host-Server/code-owners`.
 - **`.gitignore`** — editor/AI-assistant artifacts (`.vscode`, `.cursor`, `CLAUDE.md`, etc.), `.env`, `node_modules`.
 
-## Using this template
+## Development
 
-1. Click **Use this template** on GitHub to create a new repo.
-2. Set up the environment:
-
-   ```bash
-   conda env create -f environment.yml
-   conda activate template
-   ```
-
-3. Install `tox` and run the full check locally before pushing:
+1. Set up the environment: `make conda` (creates the `infrahub` conda env and installs node deps)
+2. Install `tox` and run the full check locally before pushing:
 
    ```bash
    pip install tox
