@@ -247,7 +247,7 @@ services:
       interval: 5s
       timeout: 30s
       retries: 10
-      start_period: 3s
+      start_period: 300s
     ports:
       - 15692:15692
 
@@ -275,7 +275,7 @@ services:
       interval: 2s
       timeout: 10s
       retries: 20
-      # First boot took ~4 min on a 3-core Proxmox LXC; failures here don't count
+      # Slow hosts (3-core Proxmox LXC under load) take minutes to boot; failures in this window don't count
       start_period: 300s
     ports:
       - 2004:2004
@@ -295,7 +295,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 10s
+      start_period: 300s
 
   task-manager-db:
     image: "${POSTGRES_DOCKER_IMAGE:-postgres:18-alpine}"
@@ -355,7 +355,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 10s
+      start_period: 300s
 
   # One-shot: loads ./schemas (IPAM + its dependencies) once the server is up, then exits
   schema-loader:
