@@ -34,12 +34,12 @@ def _ensure_prefix(client: InfrahubClientSync, subnet: str) -> None:
     prefix.save(allow_upsert=True)
 
 
-def _upsert_ip(client: InfrahubClientSync, cidr: str, now: datetime, mac: str | None, interface_id: str | None) -> None:
-    """Create or refresh a managed IpamIPAddress, never touching a hand-made one."""
+def _upsert_ip(client: InfrahubClientSync, cidr: str, now: datetime, mac: str | None, interface_id: str | None):
+    """Create or refresh a managed IpamIPAddress, never touching a hand-made one. Returns the node, or None if skipped."""
     existing = _first(client, "IpamIPAddress", address__value=cidr)
     action = plan_ip_write(existing.managed_by.value if existing else None, existing is not None)
     if action == "skip":
-        return
+        return None
     data = {"address": cidr, "managed_by": MANAGED, "last_seen": now.isoformat()}
     if mac:
         data["mac_address"] = mac
@@ -47,6 +47,16 @@ def _upsert_ip(client: InfrahubClientSync, cidr: str, now: datetime, mac: str | 
         data["interface"] = interface_id
     node = client.create(kind="IpamIPAddress", data=data)
     node.save(allow_upsert=True)
+    return node
+
+
+def _set_primary(client: InfrahubClientSync, vm_id: str, ip_id: str) -> None:
+    """Show the IP on the VM's page by making it the VM's primary address (managed VMs only)."""
+    # shortcut: a VM with several IPs shows the last one linked; pick by role/interface if that matters
+    vm = client.get(kind="VirtualizationVirtualMachine", id=vm_id)
+    if vm.managed_by.value == MANAGED and vm.primary_address.id != ip_id:
+        vm.primary_address = ip_id
+        vm.save()
 
 
 def _delete_missing(client: InfrahubClientSync, kind: str, keep_names: set[str]) -> None:
@@ -101,8 +111,9 @@ def sync_guests(client: InfrahubClientSync, guests: list[dict], subnets: list[st
 
             for ip in nic.get("ips", []):
                 cidr = to_cidr(ip, subnets)
-                if cidr:
-                    _upsert_ip(client, cidr, now, mac=nic.get("mac"), interface_id=iface.id)
+                ip_node = _upsert_ip(client, cidr, now, mac=nic.get("mac"), interface_id=iface.id) if cidr else None
+                if ip_node:
+                    _set_primary(client, vm.id, ip_node.id)
 
     _delete_missing(client, "VirtualizationVirtualMachine", keep_vm_names)
     _delete_missing(client, "ProxmoxNode", set(nodes))
@@ -111,13 +122,18 @@ def sync_guests(client: InfrahubClientSync, guests: list[dict], subnets: list[st
 def record_scan(client: InfrahubClientSync, hits: list[dict], subnets: list[str], now: datetime) -> None:
     """Record live hosts found by the network scan, linking to a managed interface when the MAC matches."""
     # Infrahub stores interface MACs uppercase and filters case-sensitively, so match in Python instead.
-    iface_by_mac = {normalize_mac(i.mac_address.value): i.id for i in client.filters(kind="InterfaceVirtual", managed_by__value=MANAGED) if i.mac_address.value}
+    iface_by_mac = {
+        normalize_mac(i.mac_address.value): (i.id, i.device.id) for i in client.filters(kind="InterfaceVirtual", managed_by__value=MANAGED) if i.mac_address.value
+    }
     for hit in hits:
         cidr = to_cidr(hit["ip"], subnets)
         if cidr is None:
             continue
         mac = hit.get("mac")
-        _upsert_ip(client, cidr, now, mac=mac, interface_id=iface_by_mac.get(mac))
+        iface_id, vm_id = iface_by_mac.get(mac, (None, None))
+        ip_node = _upsert_ip(client, cidr, now, mac=mac, interface_id=iface_id)
+        if ip_node and vm_id:
+            _set_primary(client, vm_id, ip_node.id)
 
 
 def delete_stale(client: InfrahubClientSync, now: datetime, days: int) -> int:
