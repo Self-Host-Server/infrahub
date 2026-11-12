@@ -4,7 +4,7 @@ from datetime import datetime
 from infrahub_sdk.client import InfrahubClientSync
 from infrahub_sdk.exceptions import Error as InfrahubError
 
-from ipam_sync.rules import MANAGED, is_stale, plan_ip_write, select_deletions, to_cidr
+from ipam_sync.rules import MANAGED, is_stale, normalize_mac, plan_ip_write, select_deletions, to_cidr
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +18,12 @@ def _first(client: InfrahubClientSync, kind: str, **filters):
 def _managed(client: InfrahubClientSync, kind: str) -> list[dict]:
     """List {"name", "managed_by"} for every node of kind managed by ipam-sync."""
     return [{"name": n.name.value, "managed_by": n.managed_by.value} for n in client.filters(kind=kind, managed_by__value=MANAGED)]
+
+
+def _hand_made(client: InfrahubClientSync, kind: str, name: str) -> bool:
+    """True if a node of kind with this name exists and was not created by ipam-sync (upsert would take it over)."""
+    existing = _first(client, kind, name__value=name)
+    return existing is not None and existing.managed_by.value != MANAGED
 
 
 def _ensure_prefix(client: InfrahubClientSync, subnet: str) -> None:
@@ -65,10 +71,16 @@ def sync_guests(client: InfrahubClientSync, guests: list[dict], subnets: list[st
     for guest in guests:
         node_name = guest["node"]
         if node_name not in nodes:
-            proxmox_node = client.create(kind="ProxmoxNode", data={"name": node_name, "managed_by": MANAGED})
-            proxmox_node.save(allow_upsert=True)
-            nodes[node_name] = proxmox_node
+            if _hand_made(client, "ProxmoxNode", node_name):
+                nodes[node_name] = _first(client, "ProxmoxNode", name__value=node_name)
+            else:
+                proxmox_node = client.create(kind="ProxmoxNode", data={"name": node_name, "managed_by": MANAGED})
+                proxmox_node.save(allow_upsert=True)
+                nodes[node_name] = proxmox_node
 
+        if _hand_made(client, "VirtualizationVirtualMachine", guest["name"]):
+            log.warning("skipping guest %r: a hand-made VM already uses this name", guest["name"])
+            continue
         vm = client.create(
             kind="VirtualizationVirtualMachine",
             data={"name": guest["name"], "host": nodes[node_name].id, "managed_by": MANAGED},
@@ -98,16 +110,14 @@ def sync_guests(client: InfrahubClientSync, guests: list[dict], subnets: list[st
 
 def record_scan(client: InfrahubClientSync, hits: list[dict], subnets: list[str], now: datetime) -> None:
     """Record live hosts found by the network scan, linking to a managed interface when the MAC matches."""
+    # Infrahub stores interface MACs uppercase and filters case-sensitively, so match in Python instead.
+    iface_by_mac = {normalize_mac(i.mac_address.value): i.id for i in client.filters(kind="InterfaceVirtual", managed_by__value=MANAGED) if i.mac_address.value}
     for hit in hits:
         cidr = to_cidr(hit["ip"], subnets)
         if cidr is None:
             continue
         mac = hit.get("mac")
-        interface_id = None
-        if mac:
-            iface = _first(client, "InterfaceVirtual", managed_by__value=MANAGED, mac_address__value=mac)
-            interface_id = iface.id if iface else None
-        _upsert_ip(client, cidr, now, mac=mac, interface_id=interface_id)
+        _upsert_ip(client, cidr, now, mac=mac, interface_id=iface_by_mac.get(mac))
 
 
 def delete_stale(client: InfrahubClientSync, now: datetime, days: int) -> int:

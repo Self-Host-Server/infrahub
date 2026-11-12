@@ -6,6 +6,7 @@
     "**/.git/**",
     "**/.tox/**",
     "**/package-lock.json",
-    "schemas/**"
+    "schemas/**",
+    "docs/superpowers/**"
   ]
 }
