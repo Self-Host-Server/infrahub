@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- nmap 7.80 at Tue Nov 11 21:00:00 2026 -->
+<nmaprun scanner="nmap" args="nmap -sn -n -oX - 192.168.1.0/24" start="1731361200" startstr="Tue Nov 11 21:00:00 2026" version="7.80" xmloutputversion="1.05">
+<scaninfo type="ping" protocol="ip" numservices="0" services=""/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1731361200" endtime="1731361205">
+  <status state="up" reason="arp-response" reason_ttl="0"/>
+  <address addr="192.168.1.80" addrtype="ipv4"/>
+  <address addr="BC:24:11:AA:BB:CC" addrtype="mac" vendor="Manufacturer Name"/>
+  <hostnames>
+  </hostnames>
+  <times srtt="42" rttvar="5000" to="100000"/>
+</host>
+<host starttime="1731361201" endtime="1731361206">
+  <status state="up" reason="arp-response" reason_ttl="0"/>
+  <address addr="192.168.1.5" addrtype="ipv4"/>
+  <hostnames>
+  </hostnames>
+  <times srtt="38" rttvar="5000" to="100000"/>
+</host>
+<host starttime="1731361202" endtime="1731361207">
+  <status state="down" reason="no-response" reason_ttl="0"/>
+  <address addr="192.168.1.50" addrtype="ipv4"/>
+  <hostnames>
+  </hostnames>
+  <times srtt="100000" rttvar="5000" to="100000"/>
+</host>
+<runstats>
+  <finished time="1731361207" timestr="Tue Nov 11 21:00:07 2026" summary="Nmap done at Tue Nov 11 21:00:07 2026; 3 IP addresses scanned in 7.23 seconds" elapsed="7.23" exit="success"/>
+  <hosts up="2" down="1" total="3"/>
+</runstats>
+</nmaprun>
