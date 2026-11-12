@@ -25,7 +25,11 @@ def run_once(config: dict) -> None:
         try:
             with make_client(config["proxmox_url"], config["proxmox_token_id"], config["proxmox_token_secret"], config["proxmox_verify_tls"]) as proxmox_client:
                 guests = fetch_guests(proxmox_client)
-            sync_guests(client, guests, subnets, now)
+            if guests:
+                sync_guests(client, guests, subnets, now)
+            else:
+                # Proxmox returns an empty list (not an error) when the token lacks permissions; never treat that as "all guests deleted".
+                log.warning("Proxmox returned no guests; check the API token has PVEAuditor on / — skipping Proxmox sync")
         except Exception:
             log.exception("Proxmox sync failed")
 

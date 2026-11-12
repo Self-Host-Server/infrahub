@@ -23,8 +23,8 @@ To enable the Proxmox half, create a read-only API token on the Proxmox host:
 
 1. **Datacenter → Permissions → Users**: add user `ipam@pve`.
 2. **Datacenter → Permissions → API Tokens**: add token `infrahub` for `ipam@pve`, with "Privilege Separation" checked.
-3. **Datacenter → Permissions**: add a permission granting role `PVEAuditor` on path `/` to the token `ipam@pve!infrahub`.
-4. In `.env`, set `PROXMOX_URL` (e.g. `https://192.168.1.10:8006`), `PROXMOX_TOKEN_ID` (`ipam@pve!infrahub`) and `PROXMOX_TOKEN_SECRET` to the values above.
+3. **Datacenter → Permissions**: add role `PVEAuditor` on path `/` twice, once as a **User Permission** for `ipam@pve` and once as an **API Token Permission** for `ipam@pve!infrahub`. A privilege-separated token only gets what both it and its user have; with just one of the two, Proxmox returns an empty guest list.
+4. In `.env`, set `PROXMOX_URL` to a node's LAN address, not a reverse-proxy hostname (e.g. `https://192.168.1.10:8006`), `PROXMOX_TOKEN_ID` (`ipam@pve!infrahub`) and `PROXMOX_TOKEN_SECRET` to the values above.
 
 To run one sync cycle by hand (useful after changing `.env`, or to check it works):
 
