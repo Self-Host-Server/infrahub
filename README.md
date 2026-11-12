@@ -15,6 +15,23 @@ IPAM (IP prefixes and addresses) is loaded automatically from `schemas/` on ever
 
 SSO (Authentik or any OIDC provider): fill in the commented `SSO via OIDC` block in `.env`. See the [SSO guide](https://docs.infrahub.app/deploy-manage/user-management/sso/configure-sso).
 
+### IPAM sync (Proxmox + network scan)
+
+The `ipam-sync` service keeps IPAM filled in automatically: every 15 minutes it pulls VMs/LXCs from Proxmox VE, scans the LAN with `nmap`, and removes entries it created that are no longer seen. It only ever touches objects it created itself (`managed_by: ipam-sync`); hand-entered IPs, prefixes and devices are never modified. It comes up with the rest of the stack, `PROXMOX_URL` empty just disables the Proxmox half and runs the scan only.
+
+To enable the Proxmox half, create a read-only API token on the Proxmox host:
+
+1. **Datacenter → Permissions → Users**: add user `ipam@pve`.
+2. **Datacenter → Permissions → API Tokens**: add token `infrahub` for `ipam@pve`, with "Privilege Separation" checked.
+3. **Datacenter → Permissions**: add a permission granting role `PVEAuditor` on path `/` to the token `ipam@pve!infrahub`.
+4. In `.env`, set `PROXMOX_URL` (e.g. `https://192.168.1.10:8006`), `PROXMOX_TOKEN_ID` (`ipam@pve!infrahub`) and `PROXMOX_TOKEN_SECRET` to the values above.
+
+To run one sync cycle by hand (useful after changing `.env`, or to check it works):
+
+```bash
+docker compose run --rm -e IPAM_SYNC_ONCE=1 ipam-sync
+```
+
 This repo is built on a GitHub template for bootstrapping self-hosting projects with linting, CI, and release automation already wired up (documented below).
 
 ## What's included
