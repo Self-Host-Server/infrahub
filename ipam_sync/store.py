@@ -122,9 +122,7 @@ def sync_guests(client: InfrahubClientSync, guests: list[dict], subnets: list[st
 def record_scan(client: InfrahubClientSync, hits: list[dict], subnets: list[str], now: datetime) -> None:
     """Record live hosts found by the network scan, linking to a managed interface when the MAC matches."""
     # Infrahub stores interface MACs uppercase and filters case-sensitively, so match in Python instead.
-    iface_by_mac = {
-        normalize_mac(i.mac_address.value): (i.id, i.device.id) for i in client.filters(kind="InterfaceVirtual", managed_by__value=MANAGED) if i.mac_address.value
-    }
+    iface_by_mac = {normalize_mac(i.mac_address.value): (i.id, i.device.id) for i in client.filters(kind="InterfaceVirtual", managed_by__value=MANAGED) if i.mac_address.value}
     for hit in hits:
         cidr = to_cidr(hit["ip"], subnets)
         if cidr is None:
