@@ -36,6 +36,13 @@ commit_parsers = [
 ]
 
 # =============================================================================
+# PYTEST — Test configuration
+# =============================================================================
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+# =============================================================================
 # RUFF — Python linter & formatter
 # =============================================================================
 
@@ -61,6 +68,7 @@ env_list = [
   "prettier",
   "toml-lint",
   "duplicate-code",
+  "test",
 ]
 work_dir = "/tmp/.tox"
 
@@ -76,6 +84,11 @@ skip_install = true
 base_python = "python3"
 deps = ["ruff"]
 commands = [["ruff", "check", "--no-cache", "."]]
+
+[tool.tox.env.test]
+skip_install = true
+deps = ["pytest", "httpx"]
+commands = [["pytest", "-q", "tests"]]
 
 [tool.tox.env."txt-lint"]
 skip_install = true
@@ -231,6 +244,7 @@ commands = [
   ["tox", "-e", "prettier"],
   ["tox", "-e", "toml-lint"],
   ["tox", "-e", "duplicate-code"],
+  ["tox", "-e", "test"],
   # ["tox", "-e", "combined-imports-check"],
 ]
 

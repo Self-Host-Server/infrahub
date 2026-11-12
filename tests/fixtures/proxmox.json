@@ -1,0 +1,61 @@
+{
+  "/api2/json/cluster/resources": {
+    "data": [
+      { "vmid": 100, "name": "dns", "node": "pve1", "type": "lxc" },
+      { "vmid": 101, "name": "web", "node": "pve1", "type": "qemu" },
+      { "vmid": 102, "name": "old", "node": "pve1", "type": "qemu" },
+      { "vmid": 103, "name": "broken", "node": "pve1", "type": "qemu" },
+      {
+        "vmid": 104,
+        "name": "tmpl",
+        "node": "pve1",
+        "type": "qemu",
+        "template": 1
+      }
+    ]
+  },
+  "/api2/json/nodes/pve1/lxc/100/config": {
+    "data": {
+      "net0": "name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,ip=192.168.1.53/24,gw=192.168.1.1"
+    }
+  },
+  "/api2/json/nodes/pve1/qemu/101/config": {
+    "data": {
+      "net0": "virtio=BC:24:11:AA:BB:CC,bridge=vmbr0,firewall=1"
+    }
+  },
+  "/api2/json/nodes/pve1/qemu/101/agent/network-get-interfaces": {
+    "data": {
+      "result": [
+        {
+          "name": "eth0",
+          "hardware-address": "bc:24:11:aa:bb:cc",
+          "ip-addresses": [
+            {
+              "ip-address": "192.168.1.80",
+              "ip-address-type": "ipv4",
+              "prefix": 24
+            },
+            { "ip-address": "fe80::1", "ip-address-type": "ipv6", "prefix": 64 }
+          ]
+        },
+        {
+          "name": "lo",
+          "hardware-address": "00:00:00:00:00:00",
+          "ip-addresses": [
+            {
+              "ip-address": "127.0.0.1",
+              "ip-address-type": "ipv4",
+              "prefix": 8
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "/api2/json/nodes/pve1/qemu/102/config": {
+    "data": {
+      "net0": "virtio=BC:24:11:AA:BB:DD,bridge=vmbr0,firewall=1"
+    }
+  }
+}

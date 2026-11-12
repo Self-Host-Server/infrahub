@@ -357,6 +357,20 @@ services:
       retries: 20
       start_period: 10s
 
+  # One-shot: loads ./schemas (IPAM + its dependencies) once the server is up, then exits
+  schema-loader:
+    image: "${INFRAHUB_DOCKER_IMAGE:-registry.opsmill.io/opsmill/infrahub}:${VERSION:-1.11.10}"
+    command: infrahubctl schema load /schemas --wait 60
+    restart: "no"
+    depends_on:
+      infrahub-server:
+        condition: service_healthy
+    environment:
+      INFRAHUB_ADDRESS: http://infrahub-server:8000
+      INFRAHUB_API_TOKEN: ${INFRAHUB_INITIAL_ADMIN_TOKEN:-06438eb2-8019-4776-878c-0941b1f1d1ec}
+    volumes:
+      - ./schemas:/schemas:ro
+
   task-worker:
     deploy:
       mode: replicated
@@ -383,6 +397,29 @@ services:
       INFRAHUB_WORKFLOW_PORT: ${INFRAHUB_WORKFLOW_PORT:-4200}
       PREFECT_API_URL: http://${INFRAHUB_WORKFLOW_ADDRESS:-task-manager}:${INFRAHUB_WORKFLOW_PORT:-4200}/api
     tty: true
+
+  # Keeps IPAM filled from Proxmox VE and a network scan; see ipam_sync/README or the top-level README.
+  ipam-sync:
+    build:
+      context: ./ipam_sync
+      args:
+        BASE: "${INFRAHUB_DOCKER_IMAGE:-registry.opsmill.io/opsmill/infrahub}:${VERSION:-1.11.10}"
+    restart: unless-stopped
+    network_mode: host
+    cap_add: [NET_RAW, NET_ADMIN]
+    depends_on:
+      schema-loader:
+        condition: service_completed_successfully
+    environment:
+      INFRAHUB_ADDRESS: http://localhost:8000
+      INFRAHUB_API_TOKEN: ${INFRAHUB_INITIAL_ADMIN_TOKEN:-06438eb2-8019-4776-878c-0941b1f1d1ec}
+      PROXMOX_URL: ${PROXMOX_URL:-}
+      PROXMOX_TOKEN_ID: ${PROXMOX_TOKEN_ID:-}
+      PROXMOX_TOKEN_SECRET: ${PROXMOX_TOKEN_SECRET:-}
+      PROXMOX_VERIFY_TLS: ${PROXMOX_VERIFY_TLS:-false}
+      IPAM_SCAN_SUBNETS: ${IPAM_SCAN_SUBNETS:-192.168.1.0/24}
+      IPAM_SYNC_INTERVAL_MINUTES: ${IPAM_SYNC_INTERVAL_MINUTES:-15}
+      IPAM_STALE_DAYS: ${IPAM_STALE_DAYS:-7}
 
 volumes:
   database_data:
