@@ -11,6 +11,8 @@ A self-hosted [Infrahub](https://docs.infrahub.app) deployment via Docker Compos
 
 Upgrade by bumping `VERSION` in `.env`, then `docker compose pull && docker compose up -d`. Any variable from the [configuration reference](https://docs.infrahub.app/reference/configuration) can be set in `.env`.
 
+IPAM (IP prefixes and addresses) is loaded automatically from `schemas/` on every start. See [`schemas/README.md`](schemas/README.md).
+
 SSO (Authentik or any OIDC provider): fill in the commented `SSO via OIDC` block in `.env`. See the [SSO guide](https://docs.infrahub.app/deploy-manage/user-management/sso/configure-sso).
 
 This repo is built on a GitHub template for bootstrapping self-hosting projects with linting, CI, and release automation already wired up (documented below).
